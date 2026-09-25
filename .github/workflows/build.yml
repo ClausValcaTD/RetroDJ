@@ -11,7 +11,7 @@ jobs:
     name: Build Genesis ROM
     runs-on: ubuntu-latest
     container:
-      image: sgdk/sgdk:latest
+      image: ghcr.io/stephane-d/sgdk:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
