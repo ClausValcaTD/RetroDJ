@@ -19,13 +19,20 @@
  */
 
 #include "ui.h"
-#include "../../../drivers/ym2612/ym2612_rdj.c"
+#include "../../../core/rdj_driver.h"
+#include "../../../core/rdj_backend.h"
 
 #ifdef RDJ_GENESIS_HARDWARE
 #include <genesis.h>
 #endif
 
+/* Forward declaration for YM2612 initialization function */
+void ym2612_rdj_init(uint32_t clock);
+
 int main(void) {
+    /* Set real hardware backend for Genesis */
+    rdj_set_backend(&backend_genesis_hw);
+
     /* Initialize YM2612 driver for Genesis master clock ~7.67 MHz */
     ym2612_rdj_init(7670454);
 

@@ -19,25 +19,82 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include "../core/rdj_backend.h"
 
-/* Minimal VGM Writer Implementation */
+/* Standard VGM 1.51 Header Structure (64 bytes) */
+typedef struct {
+    uint8_t  ident[4];        /* "Vgm " = 0x56 0x67 0x6D 0x20 */
+    uint32_t eof_offset;     /* File length - 4 */
+    uint32_t version;        /* Version 1.51 = 0x00000151 */
+    uint32_t sn76489_clock;  /* 0 */
+    uint32_t ym2413_clock;   /* 0 */
+    uint32_t gd3_offset;     /* 0 (no GD3 tag) */
+    uint32_t total_samples;  /* Total sample count */
+    uint32_t loop_offset;    /* 0 */
+    uint32_t loop_samples;   /* 0 */
+    uint32_t rate;           /* 50 or 60 Hz rate */
+    uint16_t sn76489_feedback;
+    uint8_t  sn76489_shift_reg_width;
+    uint8_t  sn76489_flags;
+    uint32_t ym2612_clock;   /* YM2612 clock: 7670454 */
+    uint32_t ym2151_clock;   /* 0 */
+    uint32_t data_offset;    /* Offset to data - 0x34 (0x0000000C) */
+    uint32_t reserved1;
+    uint32_t reserved2;
+} vgm_header_t;
+
 static FILE *vgm_file = NULL;
 
+void vgm_open(const char *filename) {
+    if (vgm_file) {
+        fclose(vgm_file);
+        vgm_file = NULL;
+    }
+    if (filename) {
+        vgm_file = fopen(filename, "wb");
+        if (vgm_file) {
+            vgm_header_t header;
+            memset(&header, 0, sizeof(header));
+            header.ident[0] = 'V';
+            header.ident[1] = 'g';
+            header.ident[2] = 'm';
+            header.ident[3] = ' ';
+            header.version = 0x00000151;
+            header.ym2612_clock = 7670454;
+            header.data_offset = 0x0000000C; /* Data starts at 0x40 relative to 0x34 */
+
+            fwrite(&header, sizeof(header), 1, vgm_file);
+        }
+    }
+}
+
 static void vgm_init(void) {
-    /* Ready to open file on demand or log VGM output */
-    vgm_file = NULL;
+    if (!vgm_file) {
+        /* Default output file if none opened explicitly */
+        vgm_open("output.vgm");
+    }
 }
 
 static void vgm_shutdown(void) {
     if (vgm_file) {
+        /* Write VGM end-of-sound-data command */
+        fputc(0x66, vgm_file);
+
+        /* Patch total file size in header */
+        long file_len = ftell(vgm_file);
+        if (file_len >= 4) {
+            uint32_t eof_offset = (uint32_t)(file_len - 4);
+            fseek(vgm_file, 4, SEEK_SET);
+            fwrite(&eof_offset, sizeof(uint32_t), 1, vgm_file);
+        }
+
         fclose(vgm_file);
         vgm_file = NULL;
     }
 }
 
 static void vgm_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
-    /* VGM commands for YM2612: 0x52 (port 0), 0x53 (port 1) */
     uint8_t cmd = (port & 1) ? 0x53 : 0x52;
     if (vgm_file) {
         fputc(cmd, vgm_file);
@@ -49,7 +106,6 @@ static void vgm_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
 }
 
 static void vgm_write_apu(uint16_t addr, uint8_t val) {
-    /* VGM command for NES APU: 0xB4 (reg = addr & 0x7F) */
     if (vgm_file) {
         fputc(0xB4, vgm_file);
         fputc((uint8_t)(addr & 0x7F), vgm_file);
