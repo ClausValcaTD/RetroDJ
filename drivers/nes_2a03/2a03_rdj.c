@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../../core/rdj_driver.h"
+#include "../../core/rdj_backend.h"
 
 /* Register map (from Nestopia) */
 #define APU_SQ1_VOL    0x4000  /* duty, loop, vol */
@@ -52,23 +53,11 @@ void apu_rdj_triangle_note_off(void);
 void apu_rdj_noise_on(uint8_t period, uint8_t vol);
 void apu_rdj_noise_off(void);
 
-#ifdef RDJ_TARGET_REAL_HARDWARE
-    /* For actual NES hardware - user implements */
-    extern void hardware_apu_write(uint16_t addr, uint8_t val);
-    void apu_rdj_write(uint16_t addr, uint8_t val) {
-        hardware_apu_write(addr, val);
+void apu_rdj_write(uint16_t addr, uint8_t val) {
+    if (rdj_active_backend && rdj_active_backend->write_apu) {
+        rdj_active_backend->write_apu(addr, val);
     }
-#else
-    /* For emulator/PC - logs register writes */
-    #include <stdio.h>
-    static uint8_t reg_shadow[0x20]; /* shadow register state for $4000-$4015 */
-    void apu_rdj_write(uint16_t addr, uint8_t val) {
-        if (addr >= 0x4000 && addr <= 0x4015) {
-            reg_shadow[addr - 0x4000] = val;
-        }
-        printf("[2A03] $%04X = %02X\n", addr, val);
-    }
-#endif
+}
 
 /* Default NTSC 2A03 CPU Clock = 1789773 Hz */
 static uint32_t apu_clock = 1789773;

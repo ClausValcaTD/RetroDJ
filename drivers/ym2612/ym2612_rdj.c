@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../../core/rdj_driver.h"
+#include "../../core/rdj_backend.h"
 
 #define YM2612_NUM_CHANNELS 6
 #define YM2612_NUM_PATTERNS 32
@@ -51,23 +52,11 @@ void ym2612_rdj_note_on(uint8_t channel, uint8_t note, uint8_t instrument);
 void ym2612_rdj_note_off(uint8_t channel);
 void ym2612_rdj_set_patch(uint8_t inst_slot, ym2612_patch_t *patch);
 
-#ifdef RDJ_TARGET_REAL_HARDWARE
-    /* For actual Genesis hardware - user implements */
-    extern void hardware_ym2612_write(uint8_t port,
-                                      uint8_t reg,
-                                      uint8_t val);
-    void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
-        hardware_ym2612_write(port, reg, val);
+void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
+    if (rdj_active_backend && rdj_active_backend->write_ym2612) {
+        rdj_active_backend->write_ym2612(port, reg, val);
     }
-#else
-    /* For emulator/PC - logs register writes */
-    #include <stdio.h>
-    static uint8_t reg_shadow[2][0x100]; /* shadow register state */
-    void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
-        reg_shadow[port & 1][reg] = val;
-        printf("[YM2612] P%d R%02X = %02X\n", port, reg, val);
-    }
-#endif
+}
 
 /* Register definitions */
 #define REG_KEY_ONOFF    0x28  /* Key On/Off register */
