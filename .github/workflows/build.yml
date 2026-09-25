@@ -10,16 +10,13 @@ jobs:
   build-genesis-rom:
     name: Build Genesis ROM
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/stephane-d/sgdk:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build Genesis ROM
+      - name: Build Genesis ROM via SGDK Docker
         run: |
-          cd targets/genesis
-          make
+          docker run --rm -v ${{ github.workspace }}:/m68k -w /m68k/targets/genesis ghcr.io/stephane-d/sgdk:latest make
 
       - name: Upload ROM Artifact
         uses: actions/upload-artifact@v4
