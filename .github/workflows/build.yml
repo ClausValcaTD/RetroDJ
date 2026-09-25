@@ -1,0 +1,80 @@
+name: Build RDJ ROM
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'What to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - genesis
+          - pc-tests
+
+jobs:
+
+  build-genesis:
+    name: Genesis ROM (SGDK)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      inputs.target == 'all' ||
+      inputs.target == 'genesis'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pull SGDK Docker
+        run: docker pull ghcr.io/stephane-d/sgdk:latest
+
+      - name: Build Genesis ROM
+        run: |
+          docker run --rm \
+            -v "$PWD/targets/genesis":/src \
+            -u $(id -u):$(id -g) \
+            ghcr.io/stephane-d/sgdk:latest
+
+      - name: Upload ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: RDJ-genesis-rom
+          path: targets/genesis/out/rom.md
+
+  build-pc-tests:
+    name: PC Driver Tests
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      inputs.target == 'all' ||
+      inputs.target == 'pc-tests'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build & Run Tests
+        run: |
+          gcc -std=c99 -Wall -Wextra -Werror \
+            tests/test_main.c \
+            drivers/ym2612/ym2612_rdj.c \
+            drivers/nes_2a03/2a03_rdj.c \
+            backends/backend_null.c \
+            backends/backend_vgm.c \
+            backends/backend_serial.c \
+            backends/backend_genesis_hw.c \
+            targets/genesis/src/ui.c \
+            -Icore/ -o test_runner
+          ./test_runner
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test_runner
