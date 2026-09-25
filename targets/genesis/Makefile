@@ -18,7 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-GDK ?= /opt/sgdk
+GDK ?= /sgdk
 BIN := $(GDK)/bin
 LIB := $(GDK)/lib
 INC := $(GDK)/inc

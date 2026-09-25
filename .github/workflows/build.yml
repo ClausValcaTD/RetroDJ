@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master, extract-clean-c-drivers ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-genesis-rom:
+    name: Build Genesis ROM
+    runs-on: ubuntu-latest
+    container:
+      image: sgdk/sgdk:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Genesis ROM
+        run: |
+          cd targets/genesis
+          make
+
+      - name: Upload ROM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-rom
+          path: targets/genesis/out/rom.md
+
+  build-pc-tests:
+    name: Build & Run PC Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+
+      - name: Compile and Run Tests
+        run: |
+          gcc -std=c99 -Wall -Wextra -Werror \
+            drivers/ym2612/ym2612_rdj.c \
+            drivers/nes_2a03/2a03_rdj.c \
+            backends/backend_null.c \
+            backends/backend_vgm.c \
+            backends/backend_serial.c \
+            backends/backend_genesis_hw.c \
+            targets/genesis/src/ui.c \
+            tests/test_main.c \
+            -o tests/test_runner
+          ./tests/test_runner
