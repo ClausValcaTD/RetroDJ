@@ -18,8 +18,14 @@
  */
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+    #include <stddef.h>
+#endif
+
 #include "../core/rdj_backend.h"
 
 /* Standard VGM 1.51 Header Structure (64 bytes) */

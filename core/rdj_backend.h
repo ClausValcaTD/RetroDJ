@@ -25,6 +25,7 @@
     #include <genesis.h>
 #else
     #include <stdint.h>
+    #include <stddef.h>
 #endif
 
 typedef struct rdj_backend_t {

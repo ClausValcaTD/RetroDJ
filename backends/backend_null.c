@@ -18,7 +18,13 @@
  */
 
 #include <stdio.h>
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+    #include <stddef.h>
+#endif
+
 #include "../core/rdj_backend.h"
 
 static uint8_t ym_shadow[2][256];

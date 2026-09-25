@@ -20,7 +20,13 @@
 #ifndef RDJ_SEQUENCER_H
 #define RDJ_SEQUENCER_H
 
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+    #include <stddef.h>
+#endif
+
 #include "rdj_driver.h"
 
 #define RDJ_NOTE_EMPTY   0x00

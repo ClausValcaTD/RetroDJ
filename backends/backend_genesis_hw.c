@@ -17,7 +17,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+    #include <stddef.h>
+#endif
+
 #include "../core/rdj_backend.h"
 
 /* Memory-mapped YM2612 hardware addresses on Sega Genesis / Mega Drive */

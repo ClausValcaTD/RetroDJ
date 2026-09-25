@@ -8,6 +8,7 @@
     #include <genesis.h>
 #else
     #include <stdint.h>
+    #include <stddef.h>
 #endif
 
 void ui_init(void);
