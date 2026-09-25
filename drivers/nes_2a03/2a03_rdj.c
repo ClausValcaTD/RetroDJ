@@ -52,9 +52,51 @@ void apu_rdj_triangle_note_off(void);
 void apu_rdj_noise_on(uint8_t period, uint8_t vol);
 void apu_rdj_noise_off(void);
 
+#ifdef RDJ_TARGET_REAL_HARDWARE
+    /* For actual NES hardware - user implements */
+    extern void hardware_apu_write(uint16_t addr, uint8_t val);
+    void apu_rdj_write(uint16_t addr, uint8_t val) {
+        hardware_apu_write(addr, val);
+    }
+#else
+    /* For emulator/PC - logs register writes */
+    #include <stdio.h>
+    static uint8_t reg_shadow[0x20]; /* shadow register state for $4000-$4015 */
+    void apu_rdj_write(uint16_t addr, uint8_t val) {
+        if (addr >= 0x4000 && addr <= 0x4015) {
+            reg_shadow[addr - 0x4000] = val;
+        }
+        printf("[2A03] $%04X = %02X\n", addr, val);
+    }
+#endif
+
 /* Default NTSC 2A03 CPU Clock = 1789773 Hz */
 static uint32_t apu_clock = 1789773;
 static uint8_t channel_status_mask = 0x0F;
+
+/* Precomputed uint16_t wavelength lookup table for all 128 MIDI notes
+ * Calculated for NTSC CPU clock 1789773 Hz:
+ * wavelength = (cpu_clock / (16 * note_freq_hz)) - 1
+ * Clamped to 11-bit timer limit (0..2047)
+ */
+static const uint16_t nes_wavelength_table[128] = {
+    2047, 2047, 2047, 2047, 2047, 2047, 2047, 2047,
+    2047, 2047, 2047, 2047, 2047, 2047, 2047, 2047,
+    2047, 2047, 2047, 2047, 2047, 2047, 2047, 2047,
+    2047, 2047, 2047, 2047, 2047, 2047, 2047, 2047,
+    2047, 2033, 1919, 1811, 1709, 1613, 1523, 1437,
+    1356, 1280, 1208, 1140, 1076, 1016,  959,  905,
+     854,  806,  761,  718,  678,  640,  604,  570,
+     538,  507,  479,  452,  427,  403,  380,  359,
+     338,  319,  301,  284,  268,  253,  239,  225,
+     213,  201,  189,  179,  169,  159,  150,  142,
+     134,  126,  119,  112,  106,  100,   94,   89,
+      84,   79,   75,   70,   66,   63,   59,   56,
+      52,   49,   47,   44,   41,   39,   37,   35,
+      33,   31,   29,   27,   26,   24,   23,   21,
+      20,   19,   18,   17,   16,   15,   14,   13,
+      12,   12,   11,   10,   10,    9,    8,    8
+};
 
 /* Complete MIDI note -> Hz frequency table (notes 0-127) */
 static const float midi_note_freqs[128] = {
@@ -81,14 +123,6 @@ static const float midi_note_freqs[128] = {
     8372.02f, 8869.84f, 9397.27f, 9956.06f, 10548.08f, 11175.30f,
     11839.82f, 12543.85f
 };
-
-void apu_rdj_write(uint16_t addr, uint8_t val) {
-    /* Register write stub for hardware APU interaction.
-     * Memory-mapped address range 0x4000 to 0x4015.
-     */
-    (void)addr;
-    (void)val;
-}
 
 void apu_rdj_init(uint32_t cpu_clock) {
     apu_clock = cpu_clock ? cpu_clock : 1789773;
@@ -118,11 +152,14 @@ void apu_rdj_enable_channels(uint8_t mask) {
     apu_rdj_write(APU_STATUS, channel_status_mask);
 }
 
-/* Wavelength formula calculation helper:
- * wavelength = (cpu_clock / (16 * note_freq_hz)) - 1
+/* Fast wavelength lookup helper using precomputed table for standard NTSC clock (1789773 Hz)
+ * or formula for custom clocks: wavelength = (cpu_clock / (16 * note_freq_hz)) - 1
  */
 static inline uint16_t calc_wavelength(uint8_t note) {
     if (note > 127) note = 127;
+    if (apu_clock == 1789773) {
+        return nes_wavelength_table[note];
+    }
     float freq = midi_note_freqs[note];
     if (freq <= 0.0f) return 0xFFFF;
 

@@ -51,6 +51,24 @@ void ym2612_rdj_note_on(uint8_t channel, uint8_t note, uint8_t instrument);
 void ym2612_rdj_note_off(uint8_t channel);
 void ym2612_rdj_set_patch(uint8_t inst_slot, ym2612_patch_t *patch);
 
+#ifdef RDJ_TARGET_REAL_HARDWARE
+    /* For actual Genesis hardware - user implements */
+    extern void hardware_ym2612_write(uint8_t port,
+                                      uint8_t reg,
+                                      uint8_t val);
+    void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
+        hardware_ym2612_write(port, reg, val);
+    }
+#else
+    /* For emulator/PC - logs register writes */
+    #include <stdio.h>
+    static uint8_t reg_shadow[2][0x100]; /* shadow register state */
+    void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
+        reg_shadow[port & 1][reg] = val;
+        printf("[YM2612] P%d R%02X = %02X\n", port, reg, val);
+    }
+#endif
+
 /* Register definitions */
 #define REG_KEY_ONOFF    0x28  /* Key On/Off register */
 #define REG_DETUNE_MULT  0x30  /* Detune / Multiple */
@@ -92,16 +110,6 @@ static inline uint8_t get_port(uint8_t channel) {
 /* Channel offset helper within part: 0..2 */
 static inline uint8_t get_channel_offset(uint8_t channel) {
     return (channel >= 3) ? (channel - 3) : channel;
-}
-
-/* Driver function implementations */
-void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
-    /* Write to YM2612 hardware register on port 0 (Part 1, Ch 0-2) or port 1 (Part 2, Ch 3-5).
-     * In hardware / register-level control, port determines bank selection.
-     */
-    (void)port;
-    (void)reg;
-    (void)val;
 }
 
 void ym2612_rdj_init(uint32_t clock) {
