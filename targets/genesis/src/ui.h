@@ -4,7 +4,11 @@
 #ifndef RDJ_GENESIS_UI_H
 #define RDJ_GENESIS_UI_H
 
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+#endif
 
 void ui_init(void);
 void ui_update(void);

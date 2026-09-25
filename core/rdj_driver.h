@@ -20,7 +20,11 @@
 #ifndef RDJ_DRIVER_H
 #define RDJ_DRIVER_H
 
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+#endif
 
 typedef struct rdj_driver_t {
     const char  *name;

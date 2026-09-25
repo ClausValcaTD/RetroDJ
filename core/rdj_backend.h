@@ -21,7 +21,11 @@
 #ifndef RDJ_BACKEND_H
 #define RDJ_BACKEND_H
 
-#include <stdint.h>
+#ifdef RDJ_GENESIS_HARDWARE
+    #include <genesis.h>
+#else
+    #include <stdint.h>
+#endif
 
 typedef struct rdj_backend_t {
     const char *name;
@@ -35,6 +39,7 @@ extern rdj_backend_t *rdj_active_backend;
 extern rdj_backend_t backend_null;
 extern rdj_backend_t backend_vgm;
 extern rdj_backend_t backend_serial;
+extern rdj_backend_t backend_genesis_hw;
 
 void rdj_set_backend(rdj_backend_t *backend);
 
