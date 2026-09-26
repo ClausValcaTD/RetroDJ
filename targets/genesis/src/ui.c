@@ -28,9 +28,11 @@ extern void ym2612_rdj_set_patch(uint8_t inst_slot, void *patch);
 extern void ym2612_rdj_note_on(uint8_t channel, uint8_t note, uint8_t instrument);
 extern void ym2612_rdj_note_off(uint8_t channel);
 
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 static uint8_t current_row = 0;
 static uint8_t current_col = 0;
 static uint16_t last_joy = 0;
+#endif
 
 static uint8_t channel_notes[6] = {
     0,0,0,0,0,0
@@ -72,11 +74,6 @@ void ui_init(void) {
         .LR_AMS_PMS = 0xC0   /* Stereo Center (L+R on) */
     };
     ym2612_rdj_set_patch(0, &bass_patch);
-#else
-    (void)current_row;
-    (void)current_col;
-    (void)last_joy;
-    (void)channel_notes;
 #endif
 }
 
