@@ -28,7 +28,7 @@
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 /* Serial Port Configuration String */
 static const char *serial_config = "/dev/ttyUSB0:115200";

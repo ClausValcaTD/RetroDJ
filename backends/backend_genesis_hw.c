@@ -24,7 +24,7 @@
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 /* Memory-mapped YM2612 hardware addresses on Sega Genesis / Mega Drive */
 #define YM2612_ADDR_PORT0 ((volatile uint8_t*) 0xA04000)

@@ -26,8 +26,8 @@
     #include <stddef.h>
 #endif
 
-#include "../../core/rdj_driver.h"
-#include "../../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/rdj_backend.h"
 
 #define YM2612_NUM_CHANNELS 6
 #define YM2612_NUM_PATTERNS 32

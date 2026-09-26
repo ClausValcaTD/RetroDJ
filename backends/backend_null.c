@@ -28,7 +28,7 @@
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 static uint8_t ym_shadow[2][256];
 static uint8_t apu_shadow[32];

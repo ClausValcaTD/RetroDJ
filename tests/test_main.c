@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
-#include "../core/rdj_driver.h"
-#include "../core/sequencer.h"
-#include "../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/sequencer.h"
+#include "core/rdj_backend.h"
 
 extern void vgm_open(const char *filename);
 

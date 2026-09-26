@@ -26,8 +26,8 @@
     #include <stddef.h>
 #endif
 
-#include "../../core/rdj_driver.h"
-#include "../../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/rdj_backend.h"
 
 /* Register map (from Nestopia) */
 #define APU_SQ1_VOL    0x4000  /* duty, loop, vol */

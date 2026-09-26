@@ -29,7 +29,7 @@
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 /* Standard VGM 1.51 Header Structure (64 bytes) */
 typedef struct {
