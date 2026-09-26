@@ -26,9 +26,11 @@ typedef struct {
 
 extern void ym2612_rdj_set_patch(uint8_t inst_slot, void *patch);
 
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 static uint8_t current_row = 0;
 static uint8_t current_col = 0;
 static uint16_t last_joy = 0;
+#endif
 
 void ui_init(void) {
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
@@ -49,9 +51,6 @@ void ui_init(void) {
         .LR_AMS_PMS = 0xC0   /* Stereo Center (L+R on) */
     };
     ym2612_rdj_set_patch(0, &bass_patch);
-#else
-    (void)current_row;
-    (void)current_col;
 #endif
 }
 
