@@ -48,11 +48,25 @@ jobs:
             -u $(id -u):$(id -g) \
             ghcr.io/stephane-d/sgdk:latest
 
+      - name: Prepare .md ROM Output
+        run: |
+          # SGDK generates out/rom.bin by default; copy it to rom.md
+          if [ -f targets/genesis/out/rom.bin ]; then
+            cp targets/genesis/out/rom.bin targets/genesis/out/rom.md
+            echo "Successfully generated rom.md from rom.bin!"
+          else
+            echo "Error: targets/genesis/out/rom.bin not found!"
+            ls -la targets/genesis/out/
+            exit 1
+          fi
+
       - name: Upload ROM
         uses: actions/upload-artifact@v4
         with:
           name: RDJ-genesis-rom
-          path: targets/genesis/out/rom.md
+          path: |
+            targets/genesis/out/rom.md
+            targets/genesis/out/rom.bin
 
   build-pc-tests:
     name: PC Driver Tests
