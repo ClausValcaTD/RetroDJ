@@ -82,3 +82,21 @@ rdj_backend_t backend_genesis_hw = {
     .wait_samples = genesis_hw_wait_samples,
     .wait_frame = genesis_hw_wait_frame
 };
+
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+rdj_backend_t *rdj_active_backend = &backend_genesis_hw;
+
+void rdj_set_backend(rdj_backend_t *backend) {
+    if (backend) {
+        if (rdj_active_backend && rdj_active_backend->shutdown) {
+            rdj_active_backend->shutdown();
+        }
+        rdj_active_backend = backend;
+        if (rdj_active_backend->init) {
+            rdj_active_backend->init();
+        }
+    } else {
+        rdj_active_backend = &backend_genesis_hw;
+    }
+}
+#endif
