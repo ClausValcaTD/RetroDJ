@@ -19,8 +19,8 @@
  */
 
 #include "ui.h"
-#include "../../../core/rdj_driver.h"
-#include "../../../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/rdj_backend.h"
 
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 #include <genesis.h>
