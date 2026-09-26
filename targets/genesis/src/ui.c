@@ -32,13 +32,11 @@ extern void ym2612_rdj_note_off(uint8_t channel);
 static uint8_t current_row = 0;
 static uint8_t current_col = 0;
 static uint16_t last_joy = 0;
-#endif
 
 static uint8_t channel_notes[6] = {
     0,0,0,0,0,0
 };
 
-#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 static void get_note_name(uint8_t note, char *out) {
     if (note == 0) {
         out[0] = '-'; out[1] = '-'; out[2] = '-'; out[3] = '\0';

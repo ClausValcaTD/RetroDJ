@@ -33,17 +33,44 @@
 #define YM2612_DATA_PORT1 ((volatile uint8_t*) 0xA04003)
 
 static inline void ym2612_wait_busy(void) {
-    uint16_t timeout = 1024;
-    while ((*YM2612_ADDR_PORT0 & 0x80) && --timeout) {
-        /* Wait until YM2612 busy flag clears or timeout expires */
+    while (*YM2612_ADDR_PORT0 & 0x80) {
+        /* Wait until YM2612 busy flag clears */
     }
 }
 
-static void genesis_hw_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
-#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
-    Z80_requestBus(TRUE);
-#endif
+static void genesis_hw_init(void) {
+    /* Global YM2612 reset */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x27;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00; /* reset timers */
 
+    /* Disable DAC */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x2B;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00;
+
+    /* Enable LFO off */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x22;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00;
+
+    /* Key off all 6 channels */
+    for (uint8_t ch = 0; ch < 6; ch++) {
+        uint8_t key_ch = (ch < 3) ? ch : (ch - 3 + 4);
+        ym2612_wait_busy();
+        *YM2612_ADDR_PORT0 = 0x28;
+        ym2612_wait_busy();
+        *YM2612_DATA_PORT0 = key_ch & 0x07;
+    }
+}
+
+static void genesis_hw_shutdown(void) {
+}
+
+static void genesis_hw_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
     if ((port & 1) == 0) {
         ym2612_wait_busy();
         *YM2612_ADDR_PORT0 = reg;
@@ -55,22 +82,6 @@ static void genesis_hw_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
         ym2612_wait_busy();
         *YM2612_DATA_PORT1 = val;
     }
-
-#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
-    Z80_releaseBus();
-#endif
-}
-
-static void genesis_hw_init(void) {
-    /* Disable DAC (0x2B = 0x00) */
-    genesis_hw_write_ym2612(0, 0x2B, 0x00);
-    /* Disable/Reset LFO (0x22 = 0x00) */
-    genesis_hw_write_ym2612(0, 0x22, 0x00);
-    /* Reset Timers and set normal FM mode (0x27 = 0x00) */
-    genesis_hw_write_ym2612(0, 0x27, 0x00);
-}
-
-static void genesis_hw_shutdown(void) {
 }
 
 static void genesis_hw_write_apu(uint16_t addr, uint8_t val) {
