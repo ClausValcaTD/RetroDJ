@@ -31,6 +31,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare SGDK Sources
+        run: |
+          mkdir -p targets/genesis/src/core targets/genesis/src/drivers targets/genesis/src/backends
+          cp -r core/* targets/genesis/src/core/
+          cp -r drivers/ym2612/* targets/genesis/src/drivers/
+          cp backends/backend_genesis_hw.c targets/genesis/src/backends/
+
       - name: Pull SGDK Docker
         run: docker pull ghcr.io/stephane-d/sgdk:latest
 
@@ -70,7 +77,7 @@ jobs:
             backends/backend_serial.c \
             backends/backend_genesis_hw.c \
             targets/genesis/src/ui.c \
-            -Icore/ -o test_runner
+            -I. -Icore/ -o test_runner
           ./test_runner
 
       - name: Upload Results

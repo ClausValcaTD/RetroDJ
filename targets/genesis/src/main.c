@@ -19,17 +19,25 @@
  */
 
 #include "ui.h"
-#include "../../../core/rdj_driver.h"
-#include "../../../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/rdj_backend.h"
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 #include <genesis.h>
 #endif
 
 /* Forward declaration for YM2612 initialization function */
 void ym2612_rdj_init(uint32_t clock);
 
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmain"
+int main(u16 hardReset) {
+    (void)hardReset;
+#pragma GCC diagnostic pop
+#else
 int main(void) {
+#endif
     /* Set real hardware backend for Genesis */
     rdj_set_backend(&backend_genesis_hw);
 
@@ -42,7 +50,7 @@ int main(void) {
         ui_update();
         ui_render();
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
         SYS_doVBlankProcess();
 #endif
     }

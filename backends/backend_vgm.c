@@ -17,16 +17,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
 #include <stdio.h>
 #include <string.h>
-#ifdef RDJ_GENESIS_HARDWARE
+#endif
+
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 /* Standard VGM 1.51 Header Structure (64 bytes) */
 typedef struct {
@@ -50,13 +53,18 @@ typedef struct {
     uint32_t reserved2;
 } vgm_header_t;
 
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
 static FILE *vgm_file = NULL;
+#endif
+static uint32_t total_samples_written = 0;
 
 void vgm_open(const char *filename) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     if (vgm_file) {
         fclose(vgm_file);
         vgm_file = NULL;
     }
+    total_samples_written = 0;
     if (filename) {
         vgm_file = fopen(filename, "wb");
         if (vgm_file) {
@@ -73,35 +81,47 @@ void vgm_open(const char *filename) {
             fwrite(&header, sizeof(header), 1, vgm_file);
         }
     }
+#else
+    (void)filename;
+#endif
 }
 
 static void vgm_init(void) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     if (!vgm_file) {
         /* Default output file if none opened explicitly */
         vgm_open("output.vgm");
     }
+#endif
 }
 
 static void vgm_shutdown(void) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     if (vgm_file) {
         /* Write VGM end-of-sound-data command */
         fputc(0x66, vgm_file);
 
-        /* Patch total file size in header */
+        /* Patch total file size in header (offset 0x04) */
         long file_len = ftell(vgm_file);
         if (file_len >= 4) {
             uint32_t eof_offset = (uint32_t)(file_len - 4);
-            fseek(vgm_file, 4, SEEK_SET);
+            fseek(vgm_file, 0x04, SEEK_SET);
             fwrite(&eof_offset, sizeof(uint32_t), 1, vgm_file);
         }
+
+        /* Patch total samples in header (offset 0x18, bytes 24-27) */
+        fseek(vgm_file, 0x18, SEEK_SET);
+        fwrite(&total_samples_written, sizeof(uint32_t), 1, vgm_file);
 
         fclose(vgm_file);
         vgm_file = NULL;
     }
+#endif
 }
 
 static void vgm_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
     uint8_t cmd = (port & 1) ? 0x53 : 0x52;
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     if (vgm_file) {
         fputc(cmd, vgm_file);
         fputc(reg, vgm_file);
@@ -109,9 +129,13 @@ static void vgm_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
     } else {
         printf("[VGM] CMD %02X Reg %02X Val %02X\n", cmd, reg, val);
     }
+#else
+    (void)cmd; (void)reg; (void)val;
+#endif
 }
 
 static void vgm_write_apu(uint16_t addr, uint8_t val) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     if (vgm_file) {
         fputc(0xB4, vgm_file);
         fputc((uint8_t)(addr & 0x7F), vgm_file);
@@ -119,6 +143,33 @@ static void vgm_write_apu(uint16_t addr, uint8_t val) {
     } else {
         printf("[VGM] CMD B4 Reg %02X Val %02X\n", (uint8_t)(addr & 0x7F), val);
     }
+#else
+    (void)addr; (void)val;
+#endif
+}
+
+static void vgm_wait_samples(uint16_t samples) {
+    total_samples_written += samples;
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
+    if (vgm_file) {
+        fputc(0x61, vgm_file);
+        fputc(samples & 0xFF, vgm_file);
+        fputc((samples >> 8) & 0xFF, vgm_file);
+    } else {
+        printf("[VGM] WAIT %u samples\n", samples);
+    }
+#endif
+}
+
+static void vgm_wait_frame(void) {
+    total_samples_written += 735;
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
+    if (vgm_file) {
+        fputc(0x62, vgm_file);
+    } else {
+        printf("[VGM] WAIT 1 frame (735 samples)\n");
+    }
+#endif
 }
 
 rdj_backend_t backend_vgm = {
@@ -126,5 +177,7 @@ rdj_backend_t backend_vgm = {
     .init = vgm_init,
     .shutdown = vgm_shutdown,
     .write_ym2612 = vgm_write_ym2612,
-    .write_apu = vgm_write_apu
+    .write_apu = vgm_write_apu,
+    .wait_samples = vgm_wait_samples,
+    .wait_frame = vgm_wait_frame
 };

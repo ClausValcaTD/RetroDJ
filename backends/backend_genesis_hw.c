@@ -17,20 +17,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>
     #include <stddef.h>
 #endif
 
-#include "../core/rdj_backend.h"
+#include "core/rdj_backend.h"
 
 /* Memory-mapped YM2612 hardware addresses on Sega Genesis / Mega Drive */
 #define YM2612_ADDR_PORT0 ((volatile uint8_t*) 0xA04000)
 #define YM2612_DATA_PORT0 ((volatile uint8_t*) 0xA04001)
 #define YM2612_ADDR_PORT1 ((volatile uint8_t*) 0xA04002)
 #define YM2612_DATA_PORT1 ((volatile uint8_t*) 0xA04003)
+
+static inline void ym2612_wait_busy(void) {
+    while (*YM2612_ADDR_PORT0 & 0x80) {
+        /* Wait until YM2612 busy flag clears */
+    }
+}
 
 static void genesis_hw_init(void) {
 }
@@ -40,10 +46,14 @@ static void genesis_hw_shutdown(void) {
 
 static void genesis_hw_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
     if ((port & 1) == 0) {
+        ym2612_wait_busy();
         *YM2612_ADDR_PORT0 = reg;
+        ym2612_wait_busy();
         *YM2612_DATA_PORT0 = val;
     } else {
+        ym2612_wait_busy();
         *YM2612_ADDR_PORT1 = reg;
+        ym2612_wait_busy();
         *YM2612_DATA_PORT1 = val;
     }
 }
@@ -53,10 +63,40 @@ static void genesis_hw_write_apu(uint16_t addr, uint8_t val) {
     (void)val;
 }
 
+static void genesis_hw_wait_samples(uint16_t samples) {
+    (void)samples;
+}
+
+static void genesis_hw_wait_frame(void) {
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+    SYS_doVBlankProcess();
+#endif
+}
+
 rdj_backend_t backend_genesis_hw = {
     .name = "Genesis Real Hardware Backend",
     .init = genesis_hw_init,
     .shutdown = genesis_hw_shutdown,
     .write_ym2612 = genesis_hw_write_ym2612,
-    .write_apu = genesis_hw_write_apu
+    .write_apu = genesis_hw_write_apu,
+    .wait_samples = genesis_hw_wait_samples,
+    .wait_frame = genesis_hw_wait_frame
 };
+
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+rdj_backend_t *rdj_active_backend = &backend_genesis_hw;
+
+void rdj_set_backend(rdj_backend_t *backend) {
+    if (backend) {
+        if (rdj_active_backend && rdj_active_backend->shutdown) {
+            rdj_active_backend->shutdown();
+        }
+        rdj_active_backend = backend;
+        if (rdj_active_backend->init) {
+            rdj_active_backend->init();
+        }
+    } else {
+        rdj_active_backend = &backend_genesis_hw;
+    }
+}
+#endif

@@ -28,11 +28,12 @@ LD := $(BIN)/m68k-elf-gcc
 OBJCOPY := $(BIN)/m68k-elf-objcopy
 
 SRC_CS := $(wildcard src/*.c) \
+          $(wildcard src/**/*.c) \
           $(wildcard ../../core/*.c) \
           $(wildcard ../../drivers/ym2612/*.c) \
-          $(wildcard ../../backends/*.c)
+          ../../backends/backend_genesis_hw.c
 
-INCS := -Iinc -I$(INC) -I../../core -I../../drivers/ym2612 -I../../backends
+INCS := -Iinc -I$(INC) -Isrc -I../../core -I../../drivers/ym2612 -I../../backends
 
 FLAGS := -m68000 -Wall -Wextra -O2 -fno-builtin -fomit-frame-pointer -DRDJ_GENESIS_HARDWARE
 CFLAGS := $(FLAGS) $(INCS)

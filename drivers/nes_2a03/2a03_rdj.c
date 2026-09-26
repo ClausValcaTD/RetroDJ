@@ -19,15 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>
     #include <stddef.h>
 #endif
 
-#include "../../core/rdj_driver.h"
-#include "../../core/rdj_backend.h"
+#include "core/rdj_driver.h"
+#include "core/rdj_backend.h"
 
 /* Register map (from Nestopia) */
 #define APU_SQ1_VOL    0x4000  /* duty, loop, vol */
