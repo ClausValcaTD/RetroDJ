@@ -39,6 +39,32 @@ static inline void ym2612_wait_busy(void) {
 }
 
 static void genesis_hw_init(void) {
+    /* Global YM2612 reset */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x27;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00; /* reset timers */
+
+    /* Disable DAC */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x2B;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00;
+
+    /* Enable LFO off */
+    ym2612_wait_busy();
+    *YM2612_ADDR_PORT0 = 0x22;
+    ym2612_wait_busy();
+    *YM2612_DATA_PORT0 = 0x00;
+
+    /* Key off all 6 channels */
+    for (uint8_t ch = 0; ch < 6; ch++) {
+        uint8_t key_ch = (ch < 3) ? ch : (ch - 3 + 4);
+        ym2612_wait_busy();
+        *YM2612_ADDR_PORT0 = 0x28;
+        ym2612_wait_busy();
+        *YM2612_DATA_PORT0 = key_ch & 0x07;
+    }
 }
 
 static void genesis_hw_shutdown(void) {
