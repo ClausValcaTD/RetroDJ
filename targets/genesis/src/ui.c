@@ -21,7 +21,7 @@
 #include "ui.h"
 #include <stdio.h>
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 #include <genesis.h>
 #endif
 
@@ -29,7 +29,7 @@ static uint8_t current_row = 0;
 static uint8_t current_col = 0;
 
 void ui_init(void) {
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     VDP_drawText("--- RetroDJ Tracker ---", 8, 1);
     VDP_drawText("CH1  CH2  CH3  CH4  CH5  CH6", 4, 3);
 #else
@@ -39,7 +39,7 @@ void ui_init(void) {
 }
 
 void ui_update(void) {
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     uint16_t joy = JOY_readJoypad(JOY_1);
     if (joy & BUTTON_UP) {
         if (current_row > 0) current_row--;
@@ -57,7 +57,7 @@ void ui_update(void) {
 }
 
 void ui_render(void) {
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     char buf[32];
     for (uint8_t r = 0; r < 16; r++) {
         uint8_t display_row = (current_row + r) % 64;

@@ -21,7 +21,7 @@
 #ifndef RDJ_BACKEND_H
 #define RDJ_BACKEND_H
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>
@@ -34,6 +34,8 @@ typedef struct rdj_backend_t {
     void (*shutdown)(void);
     void (*write_ym2612)(uint8_t port, uint8_t reg, uint8_t val);
     void (*write_apu)(uint16_t addr, uint8_t val);
+    void (*wait_samples)(uint16_t samples);
+    void (*wait_frame)(void);
 } rdj_backend_t;
 
 extern rdj_backend_t *rdj_active_backend;

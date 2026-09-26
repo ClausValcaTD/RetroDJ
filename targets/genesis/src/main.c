@@ -22,7 +22,7 @@
 #include "../../../core/rdj_driver.h"
 #include "../../../core/rdj_backend.h"
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 #include <genesis.h>
 #endif
 
@@ -42,7 +42,7 @@ int main(void) {
         ui_update();
         ui_render();
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
         SYS_doVBlankProcess();
 #endif
     }

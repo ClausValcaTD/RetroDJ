@@ -4,7 +4,7 @@
 #ifndef RDJ_GENESIS_UI_H
 #define RDJ_GENESIS_UI_H
 
-#ifdef RDJ_GENESIS_HARDWARE
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>

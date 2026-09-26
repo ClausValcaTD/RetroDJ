@@ -17,8 +17,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
 #include <stdio.h>
-#ifdef RDJ_GENESIS_HARDWARE
+#endif
+
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
 #else
     #include <stdint.h>
@@ -43,14 +46,36 @@ static void null_shutdown(void) {
 
 static void null_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
     ym_shadow[port & 1][reg] = val;
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     printf("[YM2612] P%d R%02X = %02X\n", port, reg, val);
+#else
+    (void)port; (void)reg; (void)val;
+#endif
 }
 
 static void null_write_apu(uint16_t addr, uint8_t val) {
     if (addr >= 0x4000 && addr <= 0x4015) {
         apu_shadow[addr - 0x4000] = val;
     }
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
     printf("[2A03] $%04X = %02X\n", addr, val);
+#else
+    (void)addr; (void)val;
+#endif
+}
+
+static void null_wait_samples(uint16_t samples) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
+    printf("[NULL] Wait %u samples\n", samples);
+#else
+    (void)samples;
+#endif
+}
+
+static void null_wait_frame(void) {
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE)
+    printf("[NULL] Wait 1 frame\n");
+#endif
 }
 
 rdj_backend_t backend_null = {
@@ -58,7 +83,9 @@ rdj_backend_t backend_null = {
     .init = null_init,
     .shutdown = null_shutdown,
     .write_ym2612 = null_write_ym2612,
-    .write_apu = null_write_apu
+    .write_apu = null_write_apu,
+    .wait_samples = null_wait_samples,
+    .wait_frame = null_wait_frame
 };
 
 rdj_backend_t *rdj_active_backend = &backend_null;
