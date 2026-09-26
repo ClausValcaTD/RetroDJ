@@ -83,13 +83,16 @@ void ym2612_rdj_write(uint8_t port, uint8_t reg, uint8_t val) {
  * Op 3: offset 0x04
  * Op 4: offset 0x0C
  */
-static const uint8_t op_offsets[4] = { 0x00, 0x08, 0x04, 0x0C };
+static const uint8_t op_offsets[4] = { 0x00, 0x04, 0x08, 0x0C };
 
 /* FNUM table for 12 notes per octave (C to B).
  * Values standard for OPN2 / YM2612 phase calculations.
  */
+/* Standard FNUM table for 12 semitones (C to B) for Sega Genesis NTSC clock (7,670,454 Hz):
+ * Fnum = (144 * Freq * 2^20 / MasterClock) / (2^(Block - 1))
+ */
 static const uint16_t ym_fnum_table[12] = {
-    617, 653, 692, 733, 777, 823, 872, 924, 979, 1037, 1099, 1164
+    644, 682, 723, 766, 811, 859, 910, 965, 1022, 1083, 1147, 1215
 };
 
 /* Internal patch bank stored without dynamic allocation */
@@ -136,6 +139,25 @@ void ym2612_rdj_reset(void) {
         patch_bank[i].FB_ALG = 0;
         patch_bank[i].LR_AMS_PMS = 0xC0; /* Default L/R stereo enabled */
     }
+
+    /* Built-in Default Working Instrument Patch (patch_bank[0]):
+     * Audible 4-operator FM sound (Electric Piano / FM Synth)
+     * Algorithm 4 (2 Modulators, 2 Carriers: Op 2 & Op 4 are carriers)
+     */
+    patch_bank[0] = (ym2612_patch_t){
+        .ops = {
+            /* Op 1 (Modulator for Op 2): DT/MUL, TL, AR, DR, SR, SL/RR, SSG */
+            { 0x31, 0x20, 0x1F, 0x05, 0x02, 0x14, 0x00 },
+            /* Op 2 (Carrier): TL = 0 (max volume), fast AR, moderate release */
+            { 0x01, 0x00, 0x1F, 0x04, 0x02, 0x14, 0x00 },
+            /* Op 3 (Modulator for Op 4) */
+            { 0x01, 0x18, 0x1F, 0x06, 0x04, 0x24, 0x00 },
+            /* Op 4 (Carrier): TL = 0 (max volume), fast AR, moderate release */
+            { 0x01, 0x00, 0x1F, 0x04, 0x02, 0x14, 0x00 }
+        },
+        .FB_ALG = 0x04,      /* Algorithm 4 */
+        .LR_AMS_PMS = 0xC0   /* Stereo L+R enabled */
+    };
 }
 
 void ym2612_rdj_set_patch(uint8_t inst_slot, ym2612_patch_t *patch) {
