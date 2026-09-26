@@ -19,7 +19,10 @@
  */
 
 #include "ui.h"
+
+#if !defined(SGDK_GCC) && !defined(RDJ_GENESIS_HARDWARE) && !defined(__m68k__)
 #include <stdio.h>
+#endif
 
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 #include <genesis.h>
