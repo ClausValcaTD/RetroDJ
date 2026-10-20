@@ -43,6 +43,7 @@ int main(void) {
 
     /* Initialize YM2612 driver for Genesis master clock ~7.67 MHz */
     ym2612_rdj_init(7670454);
+    ym2612_driver.init(7670454);
 
     ui_init();
 
