@@ -18,3 +18,5 @@ test_output.vgm
 targets/genesis/src/core/
 targets/genesis/src/drivers/
 targets/genesis/src/backends/
+*.asm
+gbdk-linux64.tar.gz
