@@ -33,12 +33,18 @@
 #define YM2612_DATA_PORT1 ((volatile uint8_t*) 0xA04003)
 
 static inline void ym2612_wait_busy(void) {
-    while (*YM2612_ADDR_PORT0 & 0x80) {
-        /* Wait until YM2612 busy flag clears */
+    uint16_t timeout = 10000;
+    while ((*YM2612_ADDR_PORT0 & 0x80) && --timeout) {
+        /* Wait until YM2612 busy flag clears or timeout */
     }
 }
 
 static void genesis_hw_init(void) {
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+    Z80_unloadDriver();
+    Z80_requestBus(TRUE);
+#endif
+
     /* Global YM2612 reset */
     ym2612_wait_busy();
     *YM2612_ADDR_PORT0 = 0x27;
@@ -68,9 +74,16 @@ static void genesis_hw_init(void) {
 }
 
 static void genesis_hw_shutdown(void) {
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+    Z80_releaseBus();
+#endif
 }
 
 static void genesis_hw_write_ym2612(uint8_t port, uint8_t reg, uint8_t val) {
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+    Z80_requestBus(TRUE);
+#endif
+
     if ((port & 1) == 0) {
         ym2612_wait_busy();
         *YM2612_ADDR_PORT0 = reg;
