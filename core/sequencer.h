@@ -22,17 +22,19 @@
 
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
+    #define RDJ_MAX_CHANNELS 6
+    #define RDJ_MAX_PATTERNS 16
 #else
     #include <stdint.h>
     #include <stddef.h>
+    #define RDJ_MAX_CHANNELS 8
+    #define RDJ_MAX_PATTERNS 64
 #endif
 
 #include "rdj_driver.h"
 
 #define RDJ_NOTE_EMPTY   0x00
 #define RDJ_NOTE_OFF     0xFF
-#define RDJ_MAX_CHANNELS 8
-#define RDJ_MAX_PATTERNS 64
 #define RDJ_MAX_ROWS     64
 #define RDJ_MAX_INSTR    32
 
