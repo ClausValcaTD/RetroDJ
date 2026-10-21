@@ -34,6 +34,10 @@ extern void ym2612_rdj_note_off(uint8_t channel);
 static rdj_song_t g_song;
 static input_tracker_state_t g_tracker_state;
 
+static uint8_t s_tick_counter = 0;
+static uint8_t s_current_play_row = 0;
+static uint8_t s_prev_is_playing = 0;
+
 void get_note_name(uint8_t note, char *out) {
     if (note == RDJ_NOTE_EMPTY || note == 0) {
         out[0] = '-'; out[1] = '-'; out[2] = '-'; out[3] = '\0';
@@ -74,6 +78,10 @@ void ui_init(void) {
 
     input_mapper_init(&g_tracker_state);
 
+    s_tick_counter = 0;
+    s_current_play_row = 0;
+    s_prev_is_playing = 0;
+
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     VDP_clearText(0, 0, 40);
 
@@ -92,11 +100,58 @@ void ui_init(void) {
 #endif
 }
 
+static void ui_trigger_row_notes(uint8_t row) {
+    for (uint8_t ch = 0; ch < 4; ch++) {
+        rdj_row_t *r = &g_song.patterns[0].rows[row][ch];
+        if (r->note != RDJ_NOTE_EMPTY && r->note != RDJ_NOTE_OFF) {
+            ym2612_rdj_note_on(ch, r->note, r->instrument);
+        } else if (r->note == RDJ_NOTE_OFF) {
+            ym2612_rdj_note_off(ch);
+        }
+        /* CRITICAL: If r->note == RDJ_NOTE_EMPTY (0x00 / '---'), DO NOT call note_off!
+         * Let the previous note sustain naturally.
+         */
+    }
+}
+
+void ui_process_playback(void) {
+    if (g_tracker_state.is_playing) {
+        if (!s_prev_is_playing) {
+            s_prev_is_playing = 1;
+            s_tick_counter = 0;
+            s_current_play_row = g_tracker_state.cursor_row;
+            ui_trigger_row_notes(s_current_play_row);
+        } else {
+            s_tick_counter++;
+            uint8_t speed = g_song.patterns[0].speed ? g_song.patterns[0].speed : (g_song.speed ? g_song.speed : 6);
+            if (s_tick_counter >= speed) {
+                s_tick_counter = 0;
+                uint8_t pat_len = g_song.patterns[0].length ? g_song.patterns[0].length : RDJ_MAX_ROWS;
+                s_current_play_row++;
+                if (s_current_play_row >= pat_len) {
+                    s_current_play_row = 0;
+                }
+                g_tracker_state.cursor_row = s_current_play_row;
+                ui_trigger_row_notes(s_current_play_row);
+            }
+        }
+    } else {
+        if (s_prev_is_playing) {
+            s_prev_is_playing = 0;
+            s_tick_counter = 0;
+            for (uint8_t ch = 0; ch < 4; ch++) {
+                ym2612_rdj_note_off(ch);
+            }
+        }
+    }
+}
+
 void ui_update(void) {
 #if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     uint16_t joy = JOY_readJoypad(JOY_1);
     input_mapper_update(&g_tracker_state, &g_song, joy);
 #endif
+    ui_process_playback();
 }
 
 void ui_render(void) {
