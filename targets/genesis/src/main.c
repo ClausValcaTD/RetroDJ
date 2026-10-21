@@ -38,6 +38,12 @@ int main(u16 hardReset) {
 #else
 int main(void) {
 #endif
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+    /* Stop SGDK Z80 driver and take over Z80 bus for direct YM2612 hardware writes */
+    Z80_unloadDriver();
+    Z80_requestBus(TRUE);
+#endif
+
     /* Set real hardware backend for Genesis */
     rdj_set_backend(&backend_genesis_hw);
 
