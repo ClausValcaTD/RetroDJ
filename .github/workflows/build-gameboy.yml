@@ -1,0 +1,57 @@
+name: Game Boy Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'targets/gameboy/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/gb_sound/**'
+      - '.github/workflows/build-gameboy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'targets/gameboy/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/gb_sound/**'
+      - '.github/workflows/build-gameboy.yml'
+  workflow_dispatch:
+
+jobs:
+
+  build-gameboy:
+    name: Game Boy ROM (GBDK-2020)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GBDK-2020
+        run: |
+          wget -q https://github.com/gbdk-2020/gbdk-2020/releases/download/4.5.0/gbdk-linux64.tar.gz
+          tar -xzf gbdk-linux64.tar.gz
+          echo "$GITHUB_WORKSPACE/gbdk/bin" >> $GITHUB_PATH
+
+      - name: Build Game Boy ROM
+        run: |
+          make -C targets/gameboy/
+
+      - name: Verify Game Boy ROM Output
+        run: |
+          if [ -f targets/gameboy/out/rom.gb ]; then
+            echo "Successfully generated rom.gb!"
+            ls -la targets/gameboy/out/rom.gb
+          else
+            echo "Error: targets/gameboy/out/rom.gb not found!"
+            ls -la targets/gameboy/out/ || true
+            false
+          fi
+
+      - name: Upload Game Boy ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: RDJ-gameboy-rom
+          path: targets/gameboy/out/rom.gb

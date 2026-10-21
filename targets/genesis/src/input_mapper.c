@@ -3,8 +3,10 @@
 
 #include "input_mapper.h"
 
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
 extern void ym2612_rdj_note_on(uint8_t channel, uint8_t note, uint8_t instrument);
 extern void ym2612_rdj_note_off(uint8_t channel);
+#endif
 
 void input_mapper_init(input_tracker_state_t *state) {
     if (!state) return;
@@ -47,14 +49,13 @@ void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_
 
     /* BUTTON_C: Play audition note at current cursor */
     if (pressed & BUTTON_C) {
-        uint8_t audition_note;
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
         cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
-        audition_note = (cell->note != RDJ_NOTE_EMPTY && cell->note != RDJ_NOTE_OFF) ? cell->note : (state->octave * 12 + 12);
-#if !defined(__NES__) && !defined(__CC65__)
+        uint8_t audition_note = (cell->note != RDJ_NOTE_EMPTY && cell->note != RDJ_NOTE_OFF) ? cell->note : (state->octave * 12 + 12);
         ym2612_rdj_note_on(state->cursor_channel, audition_note, cell->instrument);
 #endif
     } else if ((state->last_joy & BUTTON_C) && !(joy_state & BUTTON_C)) {
-#if !defined(__NES__) && !defined(__CC65__)
+#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
         ym2612_rdj_note_off(state->cursor_channel);
 #endif
     }

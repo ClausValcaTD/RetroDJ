@@ -3,8 +3,16 @@
 *.s
 !targets/nes/src/crt0.s
 out/
+targets/gameboy/out/
 test_runner
 test_output.vgm
+
+# GBDK intermediate build artifacts
+*.ihx
+*.lst
+*.sym
+*.noi
+*.map
 
 # SGDK copied sources
 targets/genesis/src/core/

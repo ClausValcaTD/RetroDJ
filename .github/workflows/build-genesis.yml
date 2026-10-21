@@ -8,6 +8,7 @@ on:
       - 'backends/**'
       - 'core/**'
       - 'drivers/ym2612/**'
+      - 'drivers/gb_sound/**'
       - 'tests/**'
       - '.github/workflows/build-genesis.yml'
   pull_request:
@@ -17,6 +18,7 @@ on:
       - 'backends/**'
       - 'core/**'
       - 'drivers/ym2612/**'
+      - 'drivers/gb_sound/**'
       - 'tests/**'
       - '.github/workflows/build-genesis.yml'
   workflow_dispatch:
@@ -82,10 +84,12 @@ jobs:
             tests/test_main.c \
             drivers/ym2612/ym2612_rdj.c \
             drivers/nes_2a03/2a03_rdj.c \
+            drivers/gb_sound/gb_rdj.c \
             backends/backend_null.c \
             backends/backend_vgm.c \
             backends/backend_serial.c \
             backends/backend_genesis_hw.c \
+            backends/backend_gb_hw.c \
             targets/genesis/src/ui.c \
             targets/genesis/src/input_mapper.c \
             -I. -Icore/ -o test_runner
