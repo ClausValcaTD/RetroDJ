@@ -57,7 +57,7 @@ jobs:
           else
             echo "Error: targets/genesis/out/rom.bin not found!"
             ls -la targets/genesis/out/
-            exit 1
+            false
           fi
 
       - name: Upload ROM
@@ -91,6 +91,7 @@ jobs:
             backends/backend_serial.c \
             backends/backend_genesis_hw.c \
             targets/genesis/src/ui.c \
+            targets/genesis/src/input_mapper.c \
             -I. -Icore/ -o test_runner
           ./test_runner
 
