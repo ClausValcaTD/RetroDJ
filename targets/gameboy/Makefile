@@ -12,7 +12,8 @@ INCS := -I. -Isrc -I../../ -I../../core -I../../drivers/gb_sound -I../../backend
 CFLAGS := -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wm-yc $(INCS)
 
 OUT_DIR := out
-TARGET := $(OUT_DIR)/rom.gb
+TARGET_GB := $(OUT_DIR)/rom.gb
+TARGET_GBC := $(OUT_DIR)/rom.gbc
 
 C_SRCS := src/main.c \
           src/ui_gb.c \
@@ -27,14 +28,17 @@ C_OBJS := $(C_SRCS:.c=.o)
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET_GB) $(TARGET_GBC)
 
 %.o: %.c
 	GBDKDIR=$(GBDKDIR) $(LCC) $(CFLAGS) -c $< -o $@
 
-$(TARGET): $(C_OBJS)
+$(TARGET_GB): $(C_OBJS)
 	mkdir -p $(OUT_DIR)
-	GBDKDIR=$(GBDKDIR) $(LCC) $(CFLAGS) $(C_OBJS) -o $(TARGET)
+	GBDKDIR=$(GBDKDIR) $(LCC) $(CFLAGS) $(C_OBJS) -o $(TARGET_GB)
+
+$(TARGET_GBC): $(TARGET_GB)
+	cp $(TARGET_GB) $(TARGET_GBC)
 
 clean:
 	rm -rf $(OUT_DIR)
