@@ -1,31 +1,31 @@
-name: Build RDJ ROM
+name: Genesis Build & Host Tests
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'targets/genesis/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/ym2612/**'
+      - 'tests/**'
+      - '.github/workflows/build-genesis.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'targets/genesis/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/ym2612/**'
+      - 'tests/**'
+      - '.github/workflows/build-genesis.yml'
   workflow_dispatch:
-    inputs:
-      target:
-        description: 'What to build'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - genesis
-          - pc-tests
 
 jobs:
 
   build-genesis:
     name: Genesis ROM (SGDK)
     runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'workflow_dispatch' ||
-      inputs.target == 'all' ||
-      inputs.target == 'genesis'
 
     steps:
       - name: Checkout
@@ -60,7 +60,7 @@ jobs:
             false
           fi
 
-      - name: Upload ROM
+      - name: Upload Genesis ROM
         uses: actions/upload-artifact@v4
         with:
           name: RDJ-genesis-rom
@@ -71,10 +71,6 @@ jobs:
   build-pc-tests:
     name: PC Driver Tests
     runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'workflow_dispatch' ||
-      inputs.target == 'all' ||
-      inputs.target == 'pc-tests'
 
     steps:
       - name: Checkout

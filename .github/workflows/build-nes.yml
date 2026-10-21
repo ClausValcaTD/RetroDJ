@@ -1,0 +1,56 @@
+name: NES Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'targets/nes/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/nes_2a03/**'
+      - '.github/workflows/build-nes.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'targets/nes/**'
+      - 'backends/**'
+      - 'core/**'
+      - 'drivers/nes_2a03/**'
+      - '.github/workflows/build-nes.yml'
+  workflow_dispatch:
+
+jobs:
+
+  build-nes:
+    name: NES ROM (cc65)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cc65
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cc65
+
+      - name: Build NES ROM
+        run: |
+          make -C targets/nes/
+
+      - name: Verify NES ROM Output
+        run: |
+          if [ -f targets/nes/out/rom.nes ]; then
+            echo "Successfully generated rom.nes!"
+            ls -la targets/nes/out/rom.nes
+          else
+            echo "Error: targets/nes/out/rom.nes not found!"
+            ls -la targets/nes/out/ || true
+            false
+          fi
+
+      - name: Upload NES ROM
+        uses: actions/upload-artifact@v4
+        with:
+          name: RDJ-nes-rom
+          path: targets/nes/out/rom.nes

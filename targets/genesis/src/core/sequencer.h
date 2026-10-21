@@ -20,20 +20,27 @@
 #ifndef RDJ_SEQUENCER_H
 #define RDJ_SEQUENCER_H
 
-#if defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
+#if defined(__NES__) || defined(__CC65__)
+    #define RDJ_MAX_CHANNELS 4
+    #define RDJ_MAX_PATTERNS 2
+    #define RDJ_MAX_ROWS     32
+#elif defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
     #include <genesis.h>
+    #define RDJ_MAX_CHANNELS 6
+    #define RDJ_MAX_PATTERNS 16
+    #define RDJ_MAX_ROWS     64
 #else
     #include <stdint.h>
     #include <stddef.h>
+    #define RDJ_MAX_CHANNELS 8
+    #define RDJ_MAX_PATTERNS 64
+    #define RDJ_MAX_ROWS     64
 #endif
 
 #include "rdj_driver.h"
 
 #define RDJ_NOTE_EMPTY   0x00
 #define RDJ_NOTE_OFF     0xFF
-#define RDJ_MAX_CHANNELS 8
-#define RDJ_MAX_PATTERNS 64
-#define RDJ_MAX_ROWS     64
 #define RDJ_MAX_INSTR    32
 
 typedef struct {
