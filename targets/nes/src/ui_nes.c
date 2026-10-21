@@ -23,10 +23,12 @@ static uint8_t s_tick_counter = 0;
 static uint8_t s_current_play_row = 0;
 static uint8_t s_prev_is_playing = 0;
 
+extern volatile uint8_t vblank_flag;
+
 void nes_vblank_wait(void) {
 #if defined(__NES__) || defined(__CC65__)
-    /* Poll PPUSTATUS until VBlank bit (7) is set */
-    while ((PPU_STATUS & 0x80) == 0) {
+    vblank_flag = 0;
+    while (vblank_flag == 0) {
     }
 #endif
 }
@@ -53,6 +55,7 @@ uint16_t nes_read_controller(void) {
 
 static void ppu_write_string(uint16_t ppu_addr, const char *str) {
 #if defined(__NES__) || defined(__CC65__)
+    (void)PPU_STATUS; /* Reset PPU address latch */
     PPU_ADDR = (uint8_t)(ppu_addr >> 8);
     PPU_ADDR = (uint8_t)(ppu_addr & 0xFF);
     while (*str) {
@@ -114,22 +117,22 @@ void ui_init(void) {
     /* Turn off PPU screen rendering before palette setup */
     PPU_MASK = 0x00;
 
-    /* Write background palette at $3F00 */
+    /* Reset address latch and write visible palette to $3F00 */
+    (void)PPU_STATUS;
     PPU_ADDR = 0x3F;
     PPU_ADDR = 0x00;
-    PPU_DATA = 0x0F; /* Black background */
-    PPU_DATA = 0x30; /* White text */
-    PPU_DATA = 0x10; /* Light Gray */
-    PPU_DATA = 0x00; /* Dark Gray */
+    PPU_DATA = 0x0F; /* Background: Black */
+    PPU_DATA = 0x30; /* Color 1: White text */
+    PPU_DATA = 0x16; /* Color 2: Red */
+    PPU_DATA = 0x27; /* Color 3: Orange */
 
-    /* Reset PPU Scroll registers */
-    PPU_ADDR = 0x00;
-    PPU_ADDR = 0x00;
+    /* Reset PPU Scroll & Address registers */
+    (void)PPU_STATUS;
     PPU_SCROLL = 0x00;
     PPU_SCROLL = 0x00;
 
-    /* Turn on PPU background rendering */
-    PPU_MASK = 0x0A;
+    /* Turn on PPU rendering: Enable BG & Sprites, show in leftmost 8px ($1E) */
+    PPU_MASK = 0x1E;
 #endif
 }
 
@@ -236,7 +239,8 @@ void ui_render(void) {
     ppu_write_string(0x2380, "--------------------------------");
     ppu_write_string(0x23A0, "A+DIR:Note B+DIR:Val START:Play");
 
-    /* Reset scroll position after VBlank drawing */
+    /* Reset scroll position and address latch after VBlank drawing */
+    (void)PPU_STATUS;
     PPU_SCROLL = 0x00;
     PPU_SCROLL = 0x00;
 #endif
