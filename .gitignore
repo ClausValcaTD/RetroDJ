@@ -1,0 +1,12 @@
+# Build artifacts
+*.o
+*.s
+!targets/nes/src/crt0.s
+out/
+test_runner
+test_output.vgm
+
+# SGDK copied sources
+targets/genesis/src/core/
+targets/genesis/src/drivers/
+targets/genesis/src/backends/
