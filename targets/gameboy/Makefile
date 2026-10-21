@@ -1,7 +1,12 @@
 # RetroDJ - Game Boy Target Makefile (GBDK-2020)
 # GPLv3 - RetroDJ Project
 
-LCC := lcc
+GBDKDIR ?= /opt/gbdk
+ifneq ($(lastword $(subst /, ,$(GBDKDIR))),)
+    GBDKDIR := $(GBDKDIR)/
+endif
+
+LCC := $(GBDKDIR)bin/lcc
 
 INCS := -I. -Isrc -I../../ -I../../core -I../../drivers/gb_sound -I../../backends -I../../targets/genesis/src
 CFLAGS := -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wm-yc $(INCS)
@@ -25,11 +30,11 @@ C_OBJS := $(C_SRCS:.c=.o)
 all: $(TARGET)
 
 %.o: %.c
-	$(LCC) $(CFLAGS) -c $< -o $@
+	GBDKDIR=$(GBDKDIR) $(LCC) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(C_OBJS)
 	mkdir -p $(OUT_DIR)
-	$(LCC) $(CFLAGS) $(C_OBJS) -o $(TARGET)
+	GBDKDIR=$(GBDKDIR) $(LCC) $(CFLAGS) $(C_OBJS) -o $(TARGET)
 
 clean:
 	rm -rf $(OUT_DIR)
