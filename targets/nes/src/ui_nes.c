@@ -215,10 +215,15 @@ void ui_init(void) {
     (void)PPU_STATUS;
     PPU_ADDR = 0x3F;
     PPU_ADDR = 0x00;
-    PPU_DATA = 0x0F; /* Background: Black */
-    PPU_DATA = 0x30; /* Color 1: White text */
+    PPU_DATA = 0x0F; /* Color 0: Black Background */
+    PPU_DATA = 0x30; /* Color 1: Crisp White Text */
     PPU_DATA = 0x16; /* Color 2: Red */
     PPU_DATA = 0x27; /* Color 3: Orange */
+
+    /* Fill remaining background subpalettes with black */
+    for (k = 4; k < 16; k++) {
+        PPU_DATA = 0x0F;
+    }
 
     /* Clear Nametable 0 ($2000-$23BF) to spaces (0x20) */
     (void)PPU_STATUS;
@@ -253,12 +258,10 @@ void ui_init(void) {
         PPU_DATA = 0x00;
     }
 
-    /* Reset PPU scroll and address */
+    /* Reset PPU scroll */
     (void)PPU_STATUS;
     PPU_SCROLL = 0x00;
     PPU_SCROLL = 0x00;
-    PPU_ADDR = 0x00;
-    PPU_ADDR = 0x00;
 
     /* Turn on PPU rendering: Enable BG & Sprites ($1E) */
     PPU_MASK = 0x1E;
