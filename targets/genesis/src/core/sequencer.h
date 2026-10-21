@@ -25,7 +25,6 @@
     #define RDJ_MAX_PATTERNS 2
     #define RDJ_MAX_ROWS     32
 #elif defined(RDJ_GENESIS_HARDWARE) || defined(SGDK_GCC) || defined(__m68k__)
-    #include <genesis.h>
     #define RDJ_MAX_CHANNELS 6
     #define RDJ_MAX_PATTERNS 16
     #define RDJ_MAX_ROWS     64
