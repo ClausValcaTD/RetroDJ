@@ -10,6 +10,7 @@
 
 #if defined(__PORT_sm83) || defined(__TARGET_gb) || defined(GBDK)
 #include <gb/gb.h>
+#include <gb/cgb.h>
 #include <gbdk/font.h>
 #include <gbdk/console.h>
 #endif
@@ -151,6 +152,20 @@ void ui_init(void) {
     s_last_status_playing = g_tracker_state.is_playing;
 
 #if defined(__PORT_sm83) || defined(__TARGET_gb) || defined(GBDK)
+    if (_cpu == CGB_TYPE) {
+        /* LSDj-inspired Color Palette: Light BG, Dark Navy Text, Cyan Highlight, Red Marker */
+        const palette_color_t cgb_palette[4] = {
+            RGB8(245, 245, 250), /* Color 0: Light clean background */
+            RGB8(30, 130, 230),  /* Color 1: Cyan / Blue highlight */
+            RGB8(20, 25, 45),    /* Color 2: Dark navy text */
+            RGB8(225, 50, 50)    /* Color 3: Red cursor/accents */
+        };
+        set_bkg_palette(0, 1, cgb_palette);
+    } else {
+        /* DMG Monochrome fallback (Normal 4 shades: 11 10 01 00) */
+        BGP_REG = 0xE4;
+    }
+
     font_t min_font;
     font_init();
     min_font = font_load(font_ibm);

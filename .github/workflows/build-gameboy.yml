@@ -42,11 +42,11 @@ jobs:
 
       - name: Verify Game Boy ROM Output
         run: |
-          if [ -f targets/gameboy/out/rom.gb ]; then
-            echo "Successfully generated rom.gb!"
-            ls -la targets/gameboy/out/rom.gb
+          if [ -f targets/gameboy/out/rom.gb ] && [ -f targets/gameboy/out/rom.gbc ]; then
+            echo "Successfully generated rom.gb and rom.gbc!"
+            ls -la targets/gameboy/out/
           else
-            echo "Error: targets/gameboy/out/rom.gb not found!"
+            echo "Error: ROM output missing!"
             ls -la targets/gameboy/out/ || true
             false
           fi
@@ -55,4 +55,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RDJ-gameboy-rom
-          path: targets/gameboy/out/rom.gb
+          path: |
+            targets/gameboy/out/rom.gb
+            targets/gameboy/out/rom.gbc
