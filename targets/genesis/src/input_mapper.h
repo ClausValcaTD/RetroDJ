@@ -23,7 +23,7 @@
     #endif
 #endif
 
-#include "sequencer.h"
+#include "core/sequencer.h"
 
 #define RDJ_SUBCOL_NOTE 0
 #define RDJ_SUBCOL_INST 1
