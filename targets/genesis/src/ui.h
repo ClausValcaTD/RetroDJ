@@ -17,6 +17,7 @@
 void ui_init(void);
 void ui_update(void);
 void ui_render(void);
+void ui_process_playback(void);
 
 void get_note_name(uint8_t note, char *out);
 input_tracker_state_t *ui_get_tracker_state(void);

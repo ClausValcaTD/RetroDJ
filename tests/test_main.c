@@ -87,6 +87,84 @@ static void test_input_mapper(void) {
     printf("Input Mapper & Tracker UI tests passed successfully!\n");
 }
 
+static void test_sequencer_playback(void) {
+    printf("Testing Polyphonic Multi-Channel Sequencer Playback & VBlank Ticker...\n");
+    ui_init();
+
+    input_tracker_state_t *state = ui_get_tracker_state();
+    rdj_song_t *song = ui_get_song();
+
+    assert(state != NULL);
+    assert(song != NULL);
+
+    /* Configure a 3-row test pattern with 4 polyphonic channels */
+    song->patterns[0].length = 3;
+    song->patterns[0].speed = 6;
+
+    /* Row 0: Polyphonic chord across CH0..CH3 */
+    song->patterns[0].rows[0][0].note = 60; /* C-4 */
+    song->patterns[0].rows[0][1].note = 64; /* E-4 */
+    song->patterns[0].rows[0][2].note = 67; /* G-4 */
+    song->patterns[0].rows[0][3].note = 72; /* C-5 */
+
+    /* Row 1: Note-OFF on CH0, Sustain CH1 & CH3, New note on CH2 */
+    song->patterns[0].rows[1][0].note = RDJ_NOTE_OFF;
+    song->patterns[0].rows[1][1].note = RDJ_NOTE_EMPTY; /* Sustain */
+    song->patterns[0].rows[1][2].note = 71;            /* B-4 */
+    song->patterns[0].rows[1][3].note = RDJ_NOTE_EMPTY; /* Sustain */
+
+    /* Row 2: New bass note on CH0, Note-OFF on CH1..CH3 */
+    song->patterns[0].rows[2][0].note = 48; /* C-3 */
+    song->patterns[0].rows[2][1].note = RDJ_NOTE_OFF;
+    song->patterns[0].rows[2][2].note = RDJ_NOTE_OFF;
+    song->patterns[0].rows[2][3].note = RDJ_NOTE_OFF;
+
+    /* Start playback */
+    state->cursor_row = 0;
+    state->is_playing = 1;
+
+    /* Frame 0: Trigger Row 0 */
+    ui_update();
+    assert(state->cursor_row == 0);
+
+    /* Frames 1..5: Advance ticks (5 frames, row remains 0) */
+    for (int f = 0; f < 5; f++) {
+        ui_update();
+        assert(state->cursor_row == 0);
+    }
+
+    /* Frame 6 (Tick 6): Advance to Row 1 */
+    ui_update();
+    assert(state->cursor_row == 1);
+
+    /* Frames 7..11: Row remains 1 */
+    for (int f = 0; f < 5; f++) {
+        ui_update();
+        assert(state->cursor_row == 1);
+    }
+
+    /* Frame 12 (Tick 12): Advance to Row 2 */
+    ui_update();
+    assert(state->cursor_row == 2);
+
+    /* Frames 13..17: Row remains 2 */
+    for (int f = 0; f < 5; f++) {
+        ui_update();
+        assert(state->cursor_row == 2);
+    }
+
+    /* Frame 18 (Tick 18): Wrap back to Row 0 */
+    ui_update();
+    assert(state->cursor_row == 0);
+
+    /* Stop playback */
+    state->is_playing = 0;
+    ui_update();
+    assert(state->is_playing == 0);
+
+    printf("Polyphonic Multi-Channel Sequencer Playback tests passed successfully!\n");
+}
+
 int main(void) {
     printf("Testing Backends...\n");
     rdj_set_backend(&backend_null);
@@ -143,6 +221,7 @@ int main(void) {
     rdj_set_backend(&backend_null);
 
     test_input_mapper();
+    test_sequencer_playback();
 
     printf("All RetroDJ backend tests passed successfully!\n");
     return 0;
