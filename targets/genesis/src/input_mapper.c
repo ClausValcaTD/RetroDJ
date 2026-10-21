@@ -17,16 +17,20 @@ void input_mapper_init(input_tracker_state_t *state) {
 }
 
 void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_t joy_state) {
+    uint16_t pressed;
+    bool btn_a;
+    bool btn_b;
+    rdj_row_t *cell;
+
     if (!state || !song) return;
 
-    uint16_t pressed = joy_state & ~state->last_joy;
-
-    bool btn_a = (joy_state & BUTTON_A) != 0;
-    bool btn_b = (joy_state & BUTTON_B) != 0;
+    pressed = joy_state & ~state->last_joy;
+    btn_a = (joy_state & BUTTON_A) != 0;
+    btn_b = (joy_state & BUTTON_B) != 0;
 
     /* BUTTON_B + BUTTON_A combo: Clear current cell */
     if ((btn_b && (pressed & BUTTON_A)) || (btn_a && (pressed & BUTTON_B))) {
-        rdj_row_t *cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
+        cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
         cell->note = RDJ_NOTE_EMPTY;
         cell->instrument = 0;
         cell->volume = 0;
@@ -43,18 +47,23 @@ void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_
 
     /* BUTTON_C: Play audition note at current cursor */
     if (pressed & BUTTON_C) {
-        rdj_row_t *cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
-        uint8_t audition_note = (cell->note != RDJ_NOTE_EMPTY && cell->note != RDJ_NOTE_OFF) ? cell->note : (state->octave * 12 + 12);
+        uint8_t audition_note;
+        cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
+        audition_note = (cell->note != RDJ_NOTE_EMPTY && cell->note != RDJ_NOTE_OFF) ? cell->note : (state->octave * 12 + 12);
+#if !defined(__NES__) && !defined(__CC65__)
         ym2612_rdj_note_on(state->cursor_channel, audition_note, cell->instrument);
+#endif
     } else if ((state->last_joy & BUTTON_C) && !(joy_state & BUTTON_C)) {
+#if !defined(__NES__) && !defined(__CC65__)
         ym2612_rdj_note_off(state->cursor_channel);
+#endif
     }
 
     /* Directional handling based on modifiers */
     if (btn_a && !btn_b) {
         /* BUTTON_A + UP/DOWN: Transpose note by +/- 1 semitone */
         /* BUTTON_A + LEFT/RIGHT: Transpose note by +/- 1 octave (12 semitones) */
-        rdj_row_t *cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
+        cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
 
         if (pressed & BUTTON_UP) {
             if (cell->note == RDJ_NOTE_EMPTY) cell->note = state->octave * 12 + 12;
@@ -77,8 +86,9 @@ void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_
     } else if (btn_b && !btn_a) {
         /* BUTTON_B + UP/DOWN: Increment/decrement current value by 1 */
         /* BUTTON_B + LEFT/RIGHT: Increment/decrement current value by 16 (0x10) */
-        rdj_row_t *cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
         int delta = 0;
+        cell = &song->patterns[0].rows[state->cursor_row][state->cursor_channel];
+
         if (pressed & BUTTON_UP) delta = 1;
         if (pressed & BUTTON_DOWN) delta = -1;
         if (pressed & BUTTON_RIGHT) delta = 16;
@@ -87,8 +97,9 @@ void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_
         if (delta != 0) {
             switch (state->cursor_subcol) {
                 case RDJ_SUBCOL_NOTE: {
+                    int new_note;
                     if (cell->note == RDJ_NOTE_EMPTY) cell->note = state->octave * 12 + 12;
-                    int new_note = (int)cell->note + delta;
+                    new_note = (int)cell->note + delta;
                     if (new_note < 1) new_note = 1;
                     if (new_note > 127) new_note = 127;
                     cell->note = (uint8_t)new_note;
@@ -138,7 +149,7 @@ void input_mapper_update(input_tracker_state_t *state, rdj_song_t *song, uint16_
         if (pressed & BUTTON_RIGHT) {
             if (state->cursor_subcol < RDJ_NUM_SUBCOLS - 1) {
                 state->cursor_subcol++;
-            } else if (state->cursor_channel < 5) { /* 6 channels 0..5 */
+            } else if (state->cursor_channel < RDJ_MAX_CHANNELS - 1) {
                 state->cursor_channel++;
                 state->cursor_subcol = 0;
             }

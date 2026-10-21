@@ -84,38 +84,12 @@ static const uint16_t nes_wavelength_table[128] = {
      538,  507,  479,  452,  427,  403,  380,  359,
      338,  319,  301,  284,  268,  253,  239,  225,
      213,  201,  189,  179,  169,  159,  150,  142,
-     134,  126,  119,  112,  106,  100,   94,   89,
+      134,  126,  119,  112,  106,  100,   94,   89,
       84,   79,   75,   70,   66,   63,   59,   56,
       52,   49,   47,   44,   41,   39,   37,   35,
       33,   31,   29,   27,   26,   24,   23,   21,
       20,   19,   18,   17,   16,   15,   14,   13,
       12,   12,   11,   10,   10,    9,    8,    8
-};
-
-/* Complete MIDI note -> Hz frequency table (notes 0-127) */
-static const float midi_note_freqs[128] = {
-    8.18f, 8.66f, 9.18f, 9.72f, 10.30f, 10.91f,
-    11.56f, 12.25f, 12.98f, 13.75f, 14.57f, 15.43f,
-    16.35f, 17.32f, 18.35f, 19.45f, 20.60f, 21.83f,
-    23.12f, 24.50f, 25.96f, 27.50f, 29.14f, 30.87f,
-    32.70f, 34.65f, 36.71f, 38.89f, 41.20f, 43.65f,
-    46.25f, 49.00f, 51.91f, 55.00f, 58.27f, 61.74f,
-    65.41f, 69.30f, 73.42f, 77.78f, 82.41f, 87.31f,
-    92.50f, 98.00f, 103.83f, 110.00f, 116.54f, 123.47f,
-    130.81f, 138.59f, 146.83f, 155.56f, 164.81f, 174.61f,
-    185.00f, 196.00f, 207.65f, 220.00f, 233.08f, 246.94f,
-    261.63f, 277.18f, 293.66f, 311.13f, 329.63f, 349.23f,
-    369.99f, 392.00f, 415.30f, 440.00f, 466.16f, 493.88f,
-    523.25f, 554.37f, 587.33f, 622.25f, 659.26f, 698.46f,
-    739.99f, 783.99f, 830.61f, 880.00f, 932.33f, 987.77f,
-    1046.50f, 1108.73f, 1174.66f, 1244.51f, 1318.51f, 1396.91f,
-    1479.98f, 1567.98f, 1661.22f, 1760.00f, 1864.66f, 1975.53f,
-    2093.00f, 2217.46f, 2349.32f, 2489.02f, 2637.02f, 2793.83f,
-    2959.96f, 3135.96f, 3322.44f, 3520.00f, 3729.31f, 3951.07f,
-    4186.01f, 4434.92f, 4698.64f, 4978.03f, 5274.04f, 5587.65f,
-    5919.91f, 6271.93f, 6644.88f, 7040.00f, 7458.62f, 7902.13f,
-    8372.02f, 8869.84f, 9397.27f, 9956.06f, 10548.08f, 11175.30f,
-    11839.82f, 12543.85f
 };
 
 void apu_rdj_init(uint32_t cpu_clock) {
@@ -146,30 +120,23 @@ void apu_rdj_enable_channels(uint8_t mask) {
     apu_rdj_write(APU_STATUS, channel_status_mask);
 }
 
-/* Fast wavelength lookup helper using precomputed table for standard NTSC clock (1789773 Hz)
- * or formula for custom clocks: wavelength = (cpu_clock / (16 * note_freq_hz)) - 1
- */
-static inline uint16_t calc_wavelength(uint8_t note) {
+static uint16_t calc_wavelength(uint8_t note) {
     if (note > 127) note = 127;
-    if (apu_clock == 1789773) {
-        return nes_wavelength_table[note];
-    }
-    float freq = midi_note_freqs[note];
-    if (freq <= 0.0f) return 0xFFFF;
-
-    float hl = ((float)apu_clock / (16.0f * freq)) - 1.0f;
-    if (hl < 0.0f) hl = 0.0f;
-    if (hl > 2047.0f) hl = 2047.0f; /* 11-bit timer limit */
-    return (uint16_t)(hl + 0.5f);
+    return nes_wavelength_table[note];
 }
 
 void apu_rdj_square_note_on(uint8_t ch, uint8_t note, uint8_t duty, uint8_t vol) {
-    if (ch > 1) return;
-    uint16_t base_reg = (ch == 0) ? APU_SQ1_VOL : APU_SQ2_VOL;
+    uint16_t base_reg;
+    uint16_t timer;
+    uint8_t duty_bits;
+    uint8_t vol_bits;
 
-    uint16_t timer = calc_wavelength(note);
-    uint8_t duty_bits = (duty & 0x03) << 6;
-    uint8_t vol_bits = vol & 0x0F;
+    if (ch > 1) return;
+    base_reg = (ch == 0) ? APU_SQ1_VOL : APU_SQ2_VOL;
+
+    timer = calc_wavelength(note);
+    duty_bits = (duty & 0x03) << 6;
+    vol_bits = vol & 0x0F;
 
     /* Write APU_SQx_VOL: duty cycle, disable length counter halt (bit 5 = 1), constant volume (bit 4 = 1), volume */
     apu_rdj_write(base_reg + 0, duty_bits | 0x30 | vol_bits);
@@ -185,8 +152,9 @@ void apu_rdj_square_note_on(uint8_t ch, uint8_t note, uint8_t duty, uint8_t vol)
 }
 
 void apu_rdj_square_note_off(uint8_t ch) {
+    uint16_t base_reg;
     if (ch > 1) return;
-    uint16_t base_reg = (ch == 0) ? APU_SQ1_VOL : APU_SQ2_VOL;
+    base_reg = (ch == 0) ? APU_SQ1_VOL : APU_SQ2_VOL;
 
     /* Silence square channel by setting volume to 0 */
     apu_rdj_write(base_reg, 0x30);
@@ -258,16 +226,19 @@ static void apu_wrapper_shutdown(void) {
     apu_rdj_reset();
 }
 
+static const char nes_driver_name[] = "NES 2A03 APU Driver";
+static const char nes_chip_name[] = "2A03";
+
 /* Global unified driver structure instance */
 rdj_driver_t nes_2a03_driver = {
-    .name = "NES 2A03 APU Driver",
-    .chip = "2A03",
-    .num_channels = 5,
-    .num_instruments = 16,
-    .init = apu_rdj_init,
-    .reset = apu_rdj_reset,
-    .note_on = apu_wrapper_note_on,
-    .note_off = apu_wrapper_note_off,
-    .write_reg = apu_wrapper_write_reg,
-    .shutdown = apu_wrapper_shutdown
+    nes_driver_name,
+    nes_chip_name,
+    5,
+    16,
+    apu_rdj_init,
+    apu_rdj_reset,
+    apu_wrapper_note_on,
+    apu_wrapper_note_off,
+    apu_wrapper_write_reg,
+    apu_wrapper_shutdown
 };

@@ -43,6 +43,7 @@ extern rdj_backend_t backend_null;
 extern rdj_backend_t backend_vgm;
 extern rdj_backend_t backend_serial;
 extern rdj_backend_t backend_genesis_hw;
+extern rdj_backend_t backend_nes_hw;
 
 void rdj_set_backend(rdj_backend_t *backend);
 
