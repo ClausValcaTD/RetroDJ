@@ -9,7 +9,7 @@ endif
 LCC := $(GBDKDIR)bin/lcc
 
 INCS := -I. -Isrc -I../../ -I../../core -I../../drivers/gb_sound -I../../backends -I../../targets/genesis/src
-CFLAGS := -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wm-yc $(INCS)
+CFLAGS := -Wa-l -Wl-m -Wl-j -DUSE_SFR_FOR_REG -Wm-yC $(INCS)
 
 OUT_DIR := out
 TARGET_GB := $(OUT_DIR)/rom.gb
