@@ -26,14 +26,14 @@ extern rdj_driver_t gb_sound_driver;
 extern rdj_backend_t backend_gb_hw;
 
 int main(void) {
+    /* Initialize Tracker UI */
+    ui_init();
+
     /* Initialize and activate Game Boy hardware backend */
     rdj_set_backend(&backend_gb_hw);
 
     /* Initialize Game Boy sound driver */
     gb_sound_driver.init(0);
-
-    /* Initialize Tracker UI */
-    ui_init();
 
     while (1) {
         wait_vbl_done();

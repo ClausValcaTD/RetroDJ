@@ -211,16 +211,18 @@ void ui_init(void) {
     /* Turn off PPU screen rendering before static layout setup */
     PPU_MASK = 0x00;
 
-    /* Reset address latch and write visible palette to $3F00 */
+    /* Latch address $3F00 */
     (void)PPU_STATUS;
     PPU_ADDR = 0x3F;
     PPU_ADDR = 0x00;
-    PPU_DATA = 0x0F; /* Color 0: Black Background */
-    PPU_DATA = 0x30; /* Color 1: Crisp White Text */
-    PPU_DATA = 0x16; /* Color 2: Red */
-    PPU_DATA = 0x27; /* Color 3: Orange */
 
-    /* Fill remaining background subpalettes with black */
+    /* Palette 0: Black BG ($0F), White Text ($30), Red ($16), Orange ($27) */
+    PPU_DATA = 0x0F;
+    PPU_DATA = 0x30;
+    PPU_DATA = 0x16;
+    PPU_DATA = 0x27;
+
+    /* Fill remaining 12 background palette entries with $0F */
     for (k = 4; k < 16; k++) {
         PPU_DATA = 0x0F;
     }
@@ -258,7 +260,7 @@ void ui_init(void) {
         PPU_DATA = 0x00;
     }
 
-    /* Reset PPU scroll */
+    /* Reset PPU scroll latch cleanly */
     (void)PPU_STATUS;
     PPU_SCROLL = 0x00;
     PPU_SCROLL = 0x00;

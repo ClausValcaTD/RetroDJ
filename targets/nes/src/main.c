@@ -23,14 +23,14 @@
 #include "core/rdj_backend.h"
 
 int main(void) {
+    /* Initialize Tracker UI */
+    ui_init();
+
     /* Initialize and activate NES hardware backend */
     rdj_set_backend(&backend_nes_hw);
 
     /* Initialize 2A03 APU driver for standard NTSC clock 1789773 Hz */
     nes_2a03_driver.init(1789773);
-
-    /* Initialize Tracker UI */
-    ui_init();
 
     while (1) {
         nes_vblank_wait();
